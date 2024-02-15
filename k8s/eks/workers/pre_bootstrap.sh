@@ -46,6 +46,8 @@ function preload_containerd() {
         return 0  # Exit with error
     fi
 
+    echo "arch :  ${node_arch} bucket : ${bucket_name} ami_major : ${node_image_name_major}"
+
     # Step 3: Check and create containerd directory
     mkdir -p "/mnt/k8s-disks/0/containerd" && chmod 777 "/mnt/k8s-disks/0/containerd"
 
@@ -72,7 +74,7 @@ function preload_containerd() {
         echo "Error: JSON file '$arch_config_file' does not exist or is not a regular file." 
         return 0
     else 
-        tag_to_load=$(cat $arch_config_file | jq -r '.["'"$node_image_name_major"'"].tag')
+        tag_to_load=$(cat $arch_config_file | jq -r '.node_image."'$node_image_name_major'".tag')
         s5cmd_concurrency=$(cat $arch_config_file | jq -r '.["'s5cmd'"].concurrency')
         s5cmd_part_size=$(cat $arch_config_file | jq -r '.["'s5cmd'"].part_size')
     fi
