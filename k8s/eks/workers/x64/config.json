@@ -1,0 +1,11 @@
+{
+    "node_image": {
+        "amazon-eks-node-1.27": {
+            "tag": "latest"
+        }
+    },
+    "s5cmd" : {
+        "concurrency": 128,
+        "part_size": 500
+    }
+}
