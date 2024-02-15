@@ -5,7 +5,7 @@
         }
     },
     "s5cmd" : {
-        "concurrency": 128,
-        "part_size": 500
+        "concurrency": 64,
+        "part_size": 300
     }
 }
