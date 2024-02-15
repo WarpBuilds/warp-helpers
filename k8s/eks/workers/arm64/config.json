@@ -1,6 +1,6 @@
 {
     "node_image": {
-        "amazon-eks-node-arm64-1.27": {
+        "amazon-eks-arm64-node-1.27": {
             "tag": "v0.2.0-ubuntu-2204-arm64-gh-warp"
         }
     },
