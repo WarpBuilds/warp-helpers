@@ -1,7 +1,7 @@
 {
     "node_image": {
         "amazon-eks-node-arm64-1.27": {
-            "tag": "latest"
+            "tag": "v0.2.0-ubuntu-2204-arm64-gh-warp"
         }
     },
     "s5cmd" : {
