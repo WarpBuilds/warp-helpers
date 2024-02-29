@@ -127,9 +127,13 @@ MAX_PODS=36
 # To limit the number of pods per node, we overwrite the KUBELET_EXTRA_ARGS variable in /etc/eks/bootstrap.sh to include/replace the --max-pods flag with the desired value.
 # Ref for the script: https://github.com/terraform-aws-modules/terraform-aws-eks/issues/2551#issuecomment-1534954523
 LINE_NUMBER=$(grep -n "KUBELET_EXTRA_ARGS=\$2" /etc/eks/bootstrap.sh | cut -f1 -d:)
-REPLACEMENT="\ \ \ \ \ \ KUBELET_EXTRA_ARGS=\$(echo \$2 | sed -s -E 's/--max-pods=[0-9]+/--max-pods=$MAX_PODS/g')"
-sed -i '/KUBELET_EXTRA_ARGS=\$2/d' /etc/eks/bootstrap.sh
-sed -i "${LINE_NUMBER}i ${REPLACEMENT}" /etc/eks/bootstrap.sh
+    if [ -n "$LINE_NUMBER" ]; then
+        REPLACEMENT="\ \ \ \ \ \ KUBELET_EXTRA_ARGS=\$(echo \$2 | sed -s -E 's/--max-pods=[0-9]+/--max-pods=$MAX_PODS/g')"
+        sed -i '/KUBELET_EXTRA_ARGS=\$2/d' /etc/eks/bootstrap.sh
+        sed -i "${LINE_NUMBER}i ${REPLACEMENT}" /etc/eks/bootstrap.sh
+    else
+        echo "Line number not found, skipping max nodes config"
+    fi
 }
 
 preload_containerd
