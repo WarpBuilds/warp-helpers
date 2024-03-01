@@ -27,7 +27,7 @@ function preload_containerd() {
     if [[ -z "$node_image_name_major" ]]; then
         echo "failed to parse node image name, skipping the image preload"
         return 0
-    fi 
+    fi
 
     s5cmd_download_url=""
     s5cmd_download_file=""
@@ -57,7 +57,7 @@ function preload_containerd() {
     wget $s5cmd_download_url
     tar -xf $s5cmd_download_file
     chmod +x s5cmd && mv s5cmd /usr/bin/
-    
+
     cd /mnt/k8s-disks/0
 
     # Log disk usage
@@ -71,16 +71,16 @@ function preload_containerd() {
     arch_config_file="$GIT_HELPER_BASE/$node_arch/config.json"
     # Check if the JSON file exists
     if [[ ! -f "$arch_config_file" ]]; then
-        echo "Error: JSON file '$arch_config_file' does not exist or is not a regular file." 
+        echo "Error: JSON file '$arch_config_file' does not exist or is not a regular file."
         return 0
-    else 
+    else
         tag_to_load=$(cat $arch_config_file | jq -r '.node_image."'$node_image_name_major'".tag')
         s5cmd_concurrency=$(cat $arch_config_file | jq -r '.["'s5cmd'"].concurrency')
         s5cmd_part_size=$(cat $arch_config_file | jq -r '.["'s5cmd'"].part_size')
     fi
 
     if [[ -z "$tag_to_load" ]]; then
-        echo "Missing 'tag' key in 'config.json' or empty value for ${node_image_name_major}" 
+        echo "Missing 'tag' key in 'config.json' or empty value for ${node_image_name_major}"
         return 0  # Exit successfully
     fi
 
@@ -120,4 +120,22 @@ function preload_containerd() {
     echo "Preload containerd completed in $elapsed seconds"
 }
 
+function limit_max_pods() {
+# This number should not exceed max instance storage on node (pods * storage per pod)
+MAX_PODS=36
+# EKS Managed Nodes which use Amazon AMIs run /etc/eks/bootstrap.sh to bootstrap an instance into EKS cluster. Ref: https://github.com/awslabs/amazon-eks-ami/blob/master/files/bootstrap.sh
+# The user data the we provide to AWS is prepended to the content of this script. Because of this, the env vars that we provide are usually overwritten at the end by the default values in /etc/eks/bootstrap.sh
+# To limit the number of pods per node, we overwrite the KUBELET_EXTRA_ARGS variable in /etc/eks/bootstrap.sh to include/replace the --max-pods flag with the desired value.
+# Ref for the script: https://github.com/terraform-aws-modules/terraform-aws-eks/issues/2551#issuecomment-1534954523
+LINE_NUMBER=$(grep -n "KUBELET_EXTRA_ARGS=\$2" /etc/eks/bootstrap.sh | cut -f1 -d:)
+    if [ -n "$LINE_NUMBER" ]; then
+        REPLACEMENT="\ \ \ \ \ \ KUBELET_EXTRA_ARGS=\$(echo \$2 | sed -s -E 's/--max-pods=[0-9]+/--max-pods=$MAX_PODS/g')"
+        sed -i '/KUBELET_EXTRA_ARGS=\$2/d' /etc/eks/bootstrap.sh
+        sed -i "${LINE_NUMBER}i ${REPLACEMENT}" /etc/eks/bootstrap.sh
+    else
+        echo "Line number not found, skipping max nodes config"
+    fi
+}
+
 preload_containerd
+limit_max_pods
