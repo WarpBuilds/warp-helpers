@@ -121,6 +121,7 @@ function preload_containerd() {
 }
 
 function limit_max_pods() {
+# This number should not exceed max instance storage on node (pods * storage per pod)
 MAX_PODS=36
 # EKS Managed Nodes which use Amazon AMIs run /etc/eks/bootstrap.sh to bootstrap an instance into EKS cluster. Ref: https://github.com/awslabs/amazon-eks-ami/blob/master/files/bootstrap.sh
 # The user data the we provide to AWS is prepended to the content of this script. Because of this, the env vars that we provide are usually overwritten at the end by the default values in /etc/eks/bootstrap.sh
